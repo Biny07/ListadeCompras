@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalStorage com Imagens</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff00;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #66669b;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #d4d4d4;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #d4d4d4;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: #fafafc;
+            padding: 10px;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        li.comprado {
+            background-color: #d4edda;
+        }
+        li img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+        li div {
+            flex: 1;
+        }
+        li .statusBtn {
+            background-color: #007bff;
+            margin-right: 5px;
+        }
+        li .statusBtn:hover {
+            background-color: #0056b3;
+        }
+        li .removeBtn {
+            background-color: #dc3545;
+        }
+        li .removeBtn:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lista de Compras Para Jogar Futsal</h1>
+        <div class="input-group">
+            <input type="text" id="produtoInput" placeholder="Nome do produto">
+        </div>
+        <div class="input-group">
+            <input type="text" id="imagemInput" placeholder="URL da imagem do produto">
+        </div>
+        <button id="adicionarBtn">Adicionar Produto</button>
+        
+        <ul id="listaProdutos"></ul>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const produtoInput = document.getElementById('produtoInput');
+            const imagemInput = document.getElementById('imagemInput');
+            const adicionarBtn = document.getElementById('adicionarBtn');
+            const listaProdutos = document.getElementById('listaProdutos');
+
+            const produtosPreCadastrados = [
+                { nome: 'Bola', imagem: 'imagens/bola.jpeg', comprado: false },
+                { nome: 'Chuteira', imagem: 'imagens/Chuteira.jpeg', comprado: false },
+                { nome: 'Prosocks', imagem: 'imagens/prosocks.jpeg', comprado: false }
+            ];
+
+            function carregarProdutos() {
+                const produtosNoLocalStorage = JSON.parse(localStorage.getItem('produtos')) || [];
+
+                // Se o LocalStorage estiver vazio, salva os pré-cadastrados
+                if (produtosNoLocalStorage.length === 0) {
+                    localStorage.setItem('produtos', JSON.stringify(produtosPreCadastrados));
+                }
+
+                adicionarProdutosNaLista(JSON.parse(localStorage.getItem('produtos')));
+            }
+
+            function adicionarProdutosNaLista(produtos) {
+                produtos.forEach(produto => adicionarProdutoNaLista(produto));
+            }
+
+            function adicionarProdutoNaLista(produto) {
+                const li = document.createElement('li');
+                li.className = produto.comprado ? 'comprado' : '';
+                
+                const img = document.createElement('img');
+                img.src = produto.imagem;
+                img.alt = produto.nome;
+
+                const div = document.createElement('div');
+                div.textContent = produto.nome;
+
+                const statusBtn = document.createElement('button');
+                statusBtn.textContent = produto.comprado ? 'Não Comprado' : 'Comprado';
+                statusBtn.className = 'statusBtn';
+                statusBtn.onclick = () => {
+                    produto.comprado = !produto.comprado;
+                    li.className = produto.comprado ? 'comprado' : '';
+                    statusBtn.textContent = produto.comprado ? 'Não Comprado' : 'Comprado';
+                    atualizarProdutoNoLocalStorage(produto);
+                };
+
+                const removerBtn = document.createElement('button');
+                removerBtn.textContent = 'Remover';
+                removerBtn.className = 'removeBtn';
+                removerBtn.onclick = () => {
+                    removerProdutoDaLista(produto, li);
+                };
+
+                li.appendChild(img);
+                li.appendChild(div);
+                li.appendChild(statusBtn);
+                li.appendChild(removerBtn);
+                listaProdutos.appendChild(li);
+            }
+
+            adicionarBtn.addEventListener('click', () => {
+                const produto = produtoInput.value.trim();
+                const imagem = imagemInput.value.trim();
+                if (produto && imagem) {
+                    const novoProduto = { nome: produto, imagem: imagem, comprado: false };
+                    adicionarProdutoNaLista(novoProduto);
+                    salvarProdutoNoLocalStorage(novoProduto);
+                    produtoInput.value = '';
+                    imagemInput.value = '';
+                }
+            });
+
+            function salvarProdutoNoLocalStorage(produto) {
+                const produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+                produtos.push(produto);
+                localStorage.setItem('produtos', JSON.stringify(produtos));
+            }
+
+            function atualizarProdutoNoLocalStorage(produtoAtualizado) {
+                const produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+                const novosProdutos = produtos.map(p => p.nome === produtoAtualizado.nome ? produtoAtualizado : p);
+                localStorage.setItem('produtos', JSON.stringify(novosProdutos));
+            }
+
+            function removerProdutoDaLista(produto, li) {
+                listaProdutos.removeChild(li);
+                const produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+                const novosProdutos = produtos.filter(p => p.nome !== produto.nome);
+                localStorage.setItem('produtos', JSON.stringify(novosProdutos));
+            }
+
+            carregarProdutos();
+        });
+    </script>
+</body>
+</html>
